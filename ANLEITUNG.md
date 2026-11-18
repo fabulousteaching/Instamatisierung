@@ -213,6 +213,29 @@ Klappt im Test alles, probierst du es mit einem Konto, das **kein** Tester ist:
 - **Token:** Variante B (Unified login): läuft nicht ab. Variante A: wird automatisch alle 7 Tage verlängert, solange das Tool zwischendurch läuft. War es über 60 Tage aus, erzeugst du einfach einen neuen Token (A3) und trägst ihn ein.
 - **Rund um die Uhr, ohne dass dein Computer an sein muss:** Das geht auch kostenlos, z. B. mit Oracle Cloud „Always Free“, ist aber technischer und braucht eine Kreditkarte zur Verifizierung. Sag Bescheid, wenn du das möchtest.
 
+## Rund um die Uhr bei Infomaniak (ohne laufenden PC)
+
+Hast du ein Infomaniak-Webhosting mit Node.js, kann das Tool dort dauerhaft laufen:
+
+1. Infomaniak-Manager → **Web & Domains → dein Webhosting → Website hinzufügen** → Technologie **Node.js** (Version 24).
+2. Webadresse: **bestehende Domain/Subdomain verwenden**, z. B. `quickresponse.deinedomain.ch`. ⚠️ Nicht die Hauptdomain, sonst wird deine Website ersetzt.
+3. **Bestehendes Projekt importieren** → ZIP hochladen. Die ZIP erstellst du auf dem PC: im Ordner des Tools alles **außer `node_modules`** markieren → „In ZIP-Datei komprimieren“. So kommen `.env` und `data` (Automationen, Instagram-Verbindung) mit.
+4. **Build-Befehl:** `npm install` · **Ausführungsbefehl:** `npm start` · **Port:** `3000` → *Installation abschliessen*.
+5. Danach das Tool **nicht mehr zusätzlich auf dem PC starten**, sonst gibt es doppelte Antworten.
+
+Die Dateien liegen dort unter `~/sites/<deine-subdomain>`. Diesen Ordner zeigt der normale Dateimanager nicht an, die **SSH-Konsole** schon.
+
+### Bei Infomaniak aktualisieren (ein Befehl)
+
+1. Manager → deine Node.js-Website → **SSH-Konsole öffnen**.
+2. Diese Zeile einfügen (Subdomain ggf. anpassen) und **Enter** drücken:
+   ```
+   cd ~/sites/quickresponse.fabulousteaching.ch && curl -fsSL https://raw.githubusercontent.com/fabulousteaching/Instamatisierung/claude/charming-archimedes-mdvv6l/scripts/update.sh | bash
+   ```
+3. Warten, bis **„✓ Fertig!“** erscheint, dann im Manager **„Neu starten“** klicken.
+
+`.env` und `data` bleiben dabei unverändert.
+
 ## Tool aktualisieren (neue Version übernehmen)
 
 Deine Einstellungen (`.env`) und deine Daten (Ordner `data`: Automationen, Verbindung zu Instagram) bleiben dabei erhalten.
