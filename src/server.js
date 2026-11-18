@@ -1,5 +1,6 @@
 'use strict';
 
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const express = require('express');
@@ -436,6 +437,11 @@ async function main() {
   const app = createApp({ config, store, client, poller });
   const server = app.listen(config.port, () => {
     console.log(`Instamatisierung läuft – Dashboard: http://localhost:${config.port}`);
+    const lan = Object.values(os.networkInterfaces())
+      .flat()
+      .filter((a) => a && a.family === 'IPv4' && !a.internal)
+      .map((a) => `http://${a.address}:${config.port}`);
+    if (lan.length) console.log(`Am Handy (im gleichen WLAN): ${lan.join('  oder  ')}`);
     console.log('Dieses Fenster offen lassen, solange das Tool laufen soll. Beenden mit Strg+C.');
   });
 

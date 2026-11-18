@@ -213,6 +213,30 @@ Klappt im Test alles, probierst du es mit einem Konto, das **kein** Tester ist:
 - **Token:** Variante B (Unified login): läuft nicht ab. Variante A: wird automatisch alle 7 Tage verlängert, solange das Tool zwischendurch läuft. War es über 60 Tage aus, erzeugst du einfach einen neuen Token (A3) und trägst ihn ein.
 - **Rund um die Uhr, ohne dass dein Computer an sein muss:** Das geht auch kostenlos, z. B. mit Oracle Cloud „Always Free“, ist aber technischer und braucht eine Kreditkarte zur Verifizierung. Sag Bescheid, wenn du das möchtest.
 
+## Tool aktualisieren (neue Version übernehmen)
+
+Deine Einstellungen (`.env`) und deine Daten (Ordner `data`: Automationen, Verbindung zu Instagram) bleiben dabei erhalten.
+
+1. Tool beenden: das schwarze Fenster schließen.
+2. Die neue Version als ZIP herunterladen (Link in Teil 4.2) und entpacken.
+3. Den entpackten Ordner öffnen, bis du `package.json`, `src` und `public` siehst. Alles darin markieren (**Strg + A**) und kopieren (**Strg + C**).
+4. Deinen bisherigen Ordner `Instamatisierung` öffnen, einfügen (**Strg + V**) und **„Dateien im Ziel ersetzen“** wählen.
+5. Im Ordner wie gewohnt `cmd` öffnen, dann `npm install` und `npm start` eingeben.
+
+## Am Handy nutzen (als App-Symbol)
+
+Das Tool läuft weiter auf deinem Computer. Das Handy dient als Fernbedienung, solange es **im gleichen WLAN** ist.
+
+1. Beim Start (`npm start`) zeigt das schwarze Fenster eine Zeile **„Am Handy (im gleichen WLAN): http://192.168.…:3000“**. Stehen dort mehrere Adressen, nimm die mit `192.168.`.
+2. Diese Adresse am Handy im Browser öffnen und anmelden.
+   **Lädt die Seite nicht?** Am Computer in der Windows-Suche **„Firewall“** eingeben → *Eine App durch die Windows-Firewall zulassen* → **Einstellungen ändern** → bei allen Einträgen **„Node.js JavaScript Runtime“** das Häkchen bei **Privat** setzen → **OK**. Außerdem unter *Einstellungen → Netzwerk und Internet → WLAN → dein Netzwerk* den Netzwerkprofiltyp **Privat** wählen.
+3. Als App-Symbol auf den Home-Bildschirm legen:
+   - **iPhone (Safari):** Teilen-Symbol (Quadrat mit Pfeil) → **„Zum Home-Bildschirm“** → **Hinzufügen**
+   - **Android (Chrome):** Menü **⋮** → **„App installieren“** bzw. **„Zum Startbildschirm hinzufügen“**
+
+> Die Adresse kann sich ändern, z. B. nach einem Router-Neustart. Funktioniert das Symbol nicht mehr, schau im schwarzen Fenster nach der aktuellen Adresse und leg das Symbol neu an.
+> Von unterwegs (ohne dein WLAN) geht das mit einem kostenlosen Zusatz wie Tailscale. Frag einfach.
+
 ## Hilfe
 
 | Problem | Lösung |
