@@ -1,0 +1,19 @@
+{
+  "name": "instamatisierung",
+  "version": "1.0.0",
+  "description": "Automatische Antworten auf Instagram-Kommentare (öffentliche Antwort + DM), ähnlich wie ManyChat.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch src/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

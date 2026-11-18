@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instamatisierung – Kommentar-Automationen</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💬%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <!-- Anmeldung -->
+  <section id="login-view" class="login hidden">
+    <form id="login-form" class="card login-card">
+      <div class="brand brand-lg"><span class="brand-mark">💬</span> Instamatisierung</div>
+      <p class="muted">Automatische Antworten auf Instagram-Kommentare.</p>
+      <label for="login-password">Passwort</label>
+      <input id="login-password" type="password" autocomplete="current-password" required autofocus>
+      <p id="login-error" class="error hidden"></p>
+      <button type="submit" class="btn btn-primary btn-block">Anmelden</button>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app-view" class="hidden">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">💬</span> Instamatisierung</div>
+      <nav class="tabs" id="tabs">
+        <button data-tab="rules" class="tab active">Automationen</button>
+        <button data-tab="activity" class="tab">Aktivität</button>
+        <button data-tab="test" class="tab">Testen</button>
+        <button data-tab="settings" class="tab">Einstellungen</button>
+      </nav>
+      <div class="account" id="account-badge"></div>
+      <button id="logout-btn" class="btn btn-ghost btn-sm">Abmelden</button>
+    </header>
+
+    <main class="container">
+      <div id="banner"></div>
+
+      <!-- Automationen -->
+      <section id="tab-rules" class="tab-panel">
+        <div class="section-head">
+          <div>
+            <h1>Automationen</h1>
+            <p class="muted">Wenn jemand einen passenden Kommentar schreibt, wird automatisch geantwortet – öffentlich und/oder per DM.</p>
+          </div>
+          <button id="new-rule-btn" class="btn btn-primary">+ Neue Automation</button>
+        </div>
+        <div id="rules-list" class="rules-list"></div>
+      </section>
+
+      <!-- Editor -->
+      <section id="tab-editor" class="tab-panel hidden">
+        <form id="rule-form" class="editor" novalidate>
+          <div class="section-head">
+            <h1 id="editor-title">Neue Automation</h1>
+            <div class="row gap">
+              <button type="button" class="btn btn-ghost" id="editor-cancel">Abbrechen</button>
+              <button type="submit" class="btn btn-primary">Speichern</button>
+            </div>
+          </div>
+          <div id="editor-errors" class="error-box hidden"></div>
+
+          <div class="card">
+            <h2>1. Name</h2>
+            <input name="name" type="text" maxlength="100" placeholder="z. B. „Freebie-Link per DM“" required>
+            <label class="check"><input type="checkbox" name="enabled" checked> Automation ist aktiv</label>
+          </div>
+
+          <div class="card">
+            <h2>2. Auslöser – wann soll reagiert werden?</h2>
+            <div class="radio-group">
+              <label class="radio-card"><input type="radio" name="match_type" value="contains" checked>
+                <strong>Kommentar enthält ein Schlüsselwort</strong>
+                <span class="muted">„info“ passt zu „Info bitte! 😍“ – aber nicht zu „Informationen“.</span></label>
+              <label class="radio-card"><input type="radio" name="match_type" value="exact">
+                <strong>Kommentar ist genau das Schlüsselwort</strong>
+                <span class="muted">Groß-/Kleinschreibung und Satzzeichen am Rand egal.</span></label>
+              <label class="radio-card"><input type="radio" name="match_type" value="any">
+                <strong>Jeder Kommentar</strong>
+                <span class="muted">Reagiert auf alle Kommentare (am besten nur für bestimmte Beiträge).</span></label>
+            </div>
+            <div id="keywords-field">
+              <label for="keywords">Schlüsselwörter <span class="muted">(mit Komma trennen)</span></label>
+              <input id="keywords" name="keywords" type="text" placeholder="info, link, 🔥">
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>3. Für welche Beiträge?</h2>
+            <div class="radio-row">
+              <label class="check"><input type="radio" name="scope" value="all" checked> Alle Beiträge &amp; Reels</label>
+              <label class="check"><input type="radio" name="scope" value="some"> Nur bestimmte Beiträge</label>
+            </div>
+            <div id="media-picker" class="hidden">
+              <div class="row gap wrap">
+                <button type="button" class="btn btn-sm" id="load-media-btn">Beiträge von Instagram laden</button>
+                <span class="muted" id="media-status"></span>
+              </div>
+              <div id="media-grid" class="media-grid"></div>
+              <label for="media_ids">Ausgewählte Beitrags-IDs <span class="muted">(werden automatisch gefüllt, können auch manuell eingetragen werden)</span></label>
+              <input id="media_ids" name="media_ids" type="text" placeholder="17912345678901234, 17998765432109876">
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>4. Aktionen</h2>
+            <label class="check check-lg"><input type="checkbox" name="dm_enabled"> ✉️ Direktnachricht (DM) senden</label>
+            <div id="dm-fields" class="indent hidden">
+              <label for="dm_text">Nachricht</label>
+              <textarea id="dm_text" name="dm_text" rows="4" placeholder="Hey {username}! 👋 Hier ist dein Link zum kostenlosen Guide:"></textarea>
+              <div class="grid-2">
+                <div>
+                  <label for="dm_button_title">Button-Text <span class="muted">(optional, max. 20 Zeichen)</span></label>
+                  <input id="dm_button_title" name="dm_button_title" type="text" maxlength="20" placeholder="Zum Guide">
+                </div>
+                <div>
+                  <label for="dm_button_url">Button-Link <span class="muted">(optional)</span></label>
+                  <input id="dm_button_url" name="dm_button_url" type="url" placeholder="https://…">
+                </div>
+              </div>
+              <p class="hint">Instagram erlaubt pro Kommentar genau <strong>eine</strong> private Antwort, innerhalb von 7 Tagen.</p>
+            </div>
+
+            <label class="check check-lg"><input type="checkbox" name="reply_enabled" checked> 💬 Öffentlich auf den Kommentar antworten</label>
+            <div id="reply-fields" class="indent">
+              <label for="reply_variants">Antwort-Varianten <span class="muted">(eine pro Zeile – es wird zufällig gewählt, das wirkt natürlicher)</span></label>
+              <textarea id="reply_variants" name="reply_variants" rows="4" placeholder="Schau in deine DMs, @{username}! 📩&#10;Hab dir eine Nachricht geschickt 💌&#10;Ist unterwegs – check dein Postfach! ✨"></textarea>
+            </div>
+            <p class="hint">Platzhalter: <code>{username}</code> = Instagram-Name der Person, <code>{kommentar}</code> = ihr Kommentar.</p>
+          </div>
+
+          <div class="card">
+            <h2>5. Optionen</h2>
+            <label class="check"><input type="checkbox" name="once_per_user" checked> Jede Person nur einmal pro Automation beantworten</label>
+            <div class="grid-2">
+              <div>
+                <label for="delay_seconds">Verzögerung in Sekunden <span class="muted">(± 25 % Zufall)</span></label>
+                <input id="delay_seconds" name="delay_seconds" type="number" min="0" max="3600" value="10">
+              </div>
+              <div>
+                <label for="priority">Priorität <span class="muted">(kleiner = wird zuerst geprüft)</span></label>
+                <input id="priority" name="priority" type="number" min="0" max="100000" value="100">
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Aktivität -->
+      <section id="tab-activity" class="tab-panel hidden">
+        <div class="section-head">
+          <div>
+            <h1>Aktivität</h1>
+            <p class="muted">Alle eingegangenen Kommentare und was damit passiert ist. Aktualisiert sich automatisch.</p>
+          </div>
+          <button id="refresh-activity" class="btn">Aktualisieren</button>
+        </div>
+        <div id="stats" class="stats"></div>
+        <div id="activity-list" class="activity"></div>
+        <div class="center"><button id="more-activity" class="btn btn-ghost hidden">Ältere laden</button></div>
+      </section>
+
+      <!-- Testen -->
+      <section id="tab-test" class="tab-panel hidden">
+        <h1>Testen</h1>
+        <p class="muted">Probiere aus, welche Automation auf einen Kommentar reagieren würde. Es wird <strong>nichts</strong> an Instagram gesendet.</p>
+        <form id="test-form" class="card">
+          <label for="test-text">Kommentar</label>
+          <input id="test-text" type="text" placeholder="z. B. Info bitte 😍" required>
+          <div class="grid-2">
+            <div>
+              <label for="test-username">Instagram-Name</label>
+              <input id="test-username" type="text" value="testperson">
+            </div>
+            <div>
+              <label for="test-media">Beitrags-ID <span class="muted">(optional)</span></label>
+              <input id="test-media" type="text" placeholder="leer = beliebiger Beitrag">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Testen</button>
+        </form>
+        <div id="test-result"></div>
+      </section>
+
+      <!-- Einstellungen -->
+      <section id="tab-settings" class="tab-panel hidden">
+        <h1>Einstellungen</h1>
+        <div id="settings-content"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</body>
+</html>
