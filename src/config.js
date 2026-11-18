@@ -21,6 +21,7 @@ const config = {
 
   // Zugang zum Dashboard
   adminPassword: process.env.ADMIN_PASSWORD || '',
+  // Optional – fehlt es, wird automatisch ein zufälliges Geheimnis erzeugt und in der Datenbank gespeichert.
   sessionSecret: process.env.SESSION_SECRET || '',
 
   // Meta / Instagram App
@@ -46,8 +47,8 @@ const config = {
 function validateConfig() {
   const problems = [];
   if (!config.adminPassword) problems.push('ADMIN_PASSWORD fehlt (Passwort für das Dashboard).');
-  if (!config.sessionSecret || config.sessionSecret.length < 16) {
-    problems.push('SESSION_SECRET fehlt oder ist kürzer als 16 Zeichen.');
+  if (config.sessionSecret && config.sessionSecret.length < 16) {
+    problems.push('SESSION_SECRET ist kürzer als 16 Zeichen (oder einfach weglassen – dann wird automatisch eines erzeugt).');
   }
   if (config.pollIntervalSeconds > 0 && config.pollIntervalSeconds < 30) {
     problems.push('POLL_INTERVAL_SECONDS muss 0 (aus) oder mindestens 30 sein (API-Limits).');

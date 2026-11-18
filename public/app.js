@@ -793,7 +793,7 @@ async function renderSettings() {
     el(
       'div',
       { class: 'card' },
-      el('h2', { text: 'Webhook' }),
+      el('h2', { text: s.polling.enabled ? 'Webhook (optional – im Abfrage-Modus nicht nötig)' : 'Webhook' }),
       el('label', { text: 'Rückruf-URL (im Meta-Entwicklerportal eintragen)' }),
       el('div', { class: 'copy-row' }, urlInput, copyBtn),
       el('p', { class: 'hint', text: 'Muss eine öffentlich erreichbare https-Adresse sein. Als „Überprüfungstoken“ trägst du den Wert von IG_VERIFY_TOKEN ein.' }),

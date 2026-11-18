@@ -4,6 +4,8 @@
 
 Jemand kommentiert „Info“ unter deinem Reel → das Tool schickt automatisch eine **Direktnachricht** (z. B. mit Link zu deinem Freebie) und antwortet **öffentlich** unter dem Kommentar („Schau in deine DMs 📩“).
 
+> 🆓 **Nur für dein eigenes Konto und kostenlos?** Dann folge der Schritt-für-Schritt-Anleitung **[ANLEITUNG.md](ANLEITUNG.md)**. Das Tool läuft dabei auf deinem Computer, ohne Server und ohne App-Prüfung.
+
 ![Automationen](docs/screenshot-automationen.png)
 
 ## Was das Tool kann
@@ -50,9 +52,11 @@ Voraussetzung: [Node.js](https://nodejs.org) **Version 22.13 oder neuer**.
 git clone <dieses-repository>
 cd Instamatisierung
 npm install
-cp .env.example .env      # danach .env öffnen und ADMIN_PASSWORD + SESSION_SECRET eintragen
+npm run setup     # Assistent: Dashboard-Passwort + Modus wählen, schreibt die Datei .env
 npm start
 ```
+
+Alternativ `.env.example` nach `.env` kopieren und von Hand ausfüllen.
 
 Öffne <http://localhost:3000> und melde dich mit deinem `ADMIN_PASSWORD` an. Du kannst sofort Automationen anlegen und im Reiter **Testen** ausprobieren.
 
@@ -80,7 +84,6 @@ Siehe [Hosting](#-hosting). Setze mindestens diese Umgebungsvariablen:
 | Variable | Wert |
 | --- | --- |
 | `ADMIN_PASSWORD` | dein Dashboard-Passwort |
-| `SESSION_SECRET` | langer Zufallstext, z. B. aus `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `IG_APP_SECRET` | Instagram-App-Geheimschlüssel aus Schritt 2 |
 | `IG_VERIFY_TOKEN` | ein beliebiges selbst ausgedachtes Wort, z. B. `mein-geheimes-verify-wort` |
 
@@ -159,7 +162,7 @@ Davor gehört ein Reverse-Proxy mit https (z. B. [Caddy](https://caddyserver.com
 | --- | --- | --- |
 | `PORT` | `3000` | Port des Servers |
 | `ADMIN_PASSWORD` | – | **Pflicht.** Passwort fürs Dashboard |
-| `SESSION_SECRET` | – | **Pflicht.** Mind. 16 Zeichen, signiert die Login-Sitzung |
+| `SESSION_SECRET` | automatisch | Optional. Mind. 16 Zeichen, signiert die Login-Sitzung. Fehlt es, wird eines erzeugt und gespeichert |
 | `IG_APP_SECRET` | – | Instagram-App-Geheimschlüssel (für Webhook-Signaturen). Mehrere mit Komma möglich |
 | `IG_VERIFY_TOKEN` | – | Selbst gewähltes Wort für die Webhook-Bestätigung |
 | `IG_ACCESS_TOKEN` | – | Optional, Token kann auch im Dashboard eingetragen werden |
@@ -217,6 +220,7 @@ src/
   account.js     Access Token speichern/verlängern
   auth.js        Login-Sitzung fürs Dashboard
   db.js          SQLite (eingebaut in Node, node:sqlite)
+scripts/setup.js Einrichtungs-Assistent (npm run setup)
 public/          Dashboard (HTML/CSS/JS ohne Build-Schritt)
 test/            Tests
 ```

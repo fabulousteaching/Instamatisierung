@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('node:path');
+const crypto = require('node:crypto');
 const express = require('express');
 
 const { config: defaultConfig, validateConfig } = require('./config');
@@ -335,11 +336,23 @@ async function main() {
     console.error('Siehe .env.example und README.md.');
     process.exit(1);
   }
-  if (!config.appSecret || !config.verifyToken) {
-    console.warn('Hinweis: IG_APP_SECRET und/oder IG_VERIFY_TOKEN fehlen – Webhooks funktionieren erst damit.');
+  if (config.pollIntervalSeconds === 0 && (!config.appSecret || !config.verifyToken)) {
+    console.warn(
+      'Hinweis: Weder Abfrage-Modus (POLL_INTERVAL_SECONDS) noch Webhook (IG_APP_SECRET + IG_VERIFY_TOKEN) ist eingerichtet –\n' +
+        '         so kommen keine Kommentare an. Für den eigenen Computer: POLL_INTERVAL_SECONDS=60 setzen.',
+    );
   }
 
   const store = openDatabase(config.databasePath);
+
+  if (!config.sessionSecret) {
+    let secret = store.getSetting('session_secret');
+    if (!secret) {
+      secret = crypto.randomBytes(32).toString('hex');
+      store.setSetting('session_secret', secret);
+    }
+    config.sessionSecret = secret;
+  }
   const client = new InstagramClient({
     baseUrl: config.graphBaseUrl,
     version: config.graphVersion,
@@ -364,7 +377,8 @@ async function main() {
 
   const app = createApp({ config, store, client, poller });
   const server = app.listen(config.port, () => {
-    console.log(`Instamatisierung läuft auf http://localhost:${config.port}`);
+    console.log(`Instamatisierung läuft – Dashboard: http://localhost:${config.port}`);
+    console.log('Dieses Fenster offen lassen, solange das Tool laufen soll. Beenden mit Strg+C.');
   });
 
   const shutdown = () => {
