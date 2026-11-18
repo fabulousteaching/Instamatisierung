@@ -439,6 +439,18 @@ async function main() {
     console.log('Dieses Fenster offen lassen, solange das Tool laufen soll. Beenden mit Strg+C.');
   });
 
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `\nPort ${config.port} ist schon belegt – läuft Instamatisierung schon in einem anderen Fenster?\n` +
+          'Dort mit Strg+C beenden (oder das Fenster schließen) und hier erneut "npm start" eingeben.\n',
+      );
+    } else {
+      console.error(err);
+    }
+    process.exit(1);
+  });
+
   const shutdown = () => {
     console.log('Fahre herunter …');
     worker.stop();

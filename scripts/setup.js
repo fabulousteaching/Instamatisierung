@@ -11,6 +11,17 @@ const readline = require('node:readline');
 
 const envPath = path.join(__dirname, '..', '.env');
 
+/**
+ * Wert so in die .env schreiben, dass er exakt erhalten bleibt.
+ * Ohne Anführungszeichen würde z. B. alles ab "#" als Kommentar abgeschnitten.
+ * Einfache Anführungszeichen übernehmen den Text wörtlich.
+ */
+function quoteEnvValue(value) {
+  if (!value.includes("'")) return `'${value}'`;
+  if (!value.includes('`')) return `\`${value}\``;
+  return `"${value}"`;
+}
+
 async function main() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   // Zeilen puffern, damit auch schnell (oder per Pipe) eingegebene Antworten nicht verloren gehen.
@@ -36,6 +47,10 @@ async function main() {
   while (password.length < 8) {
     password = (await ask('Wähle ein Passwort für das Dashboard (mind. 8 Zeichen): ')).trim();
     if (password.length < 8) console.log('  → Bitte mindestens 8 Zeichen.');
+    else if (password.includes("'") && password.includes('`') && password.includes('"')) {
+      console.log('  → Bitte nicht gleichzeitig \', ` und " verwenden.');
+      password = '';
+    }
   }
 
   const modeAnswer = (
@@ -50,7 +65,7 @@ async function main() {
 
   const content = [
     '# Erzeugt mit "npm run setup". Kann mit einem Texteditor angepasst werden.',
-    `ADMIN_PASSWORD=${password}`,
+    `ADMIN_PASSWORD=${quoteEnvValue(password)}`,
     `POLL_INTERVAL_SECONDS=${polling ? 60 : 0}`,
     'POLL_MEDIA_COUNT=5',
     '',
@@ -62,7 +77,9 @@ async function main() {
   fs.writeFileSync(envPath, content.join('\n'), 'utf8');
   rl.close();
 
-  console.log('\n✓ Gespeichert. Starte das Tool jetzt mit:  npm start');
+  console.log(`\n✓ Gespeichert. Dein Dashboard-Passwort ist: ${password}`);
+  console.log('  Starte das Tool jetzt mit:  npm start');
+  console.log('  (Läuft das Tool schon in einem anderen Fenster, dort erst mit Strg+C beenden.)');
   console.log('  Danach im Browser öffnen:  http://localhost:3000\n');
 }
 
