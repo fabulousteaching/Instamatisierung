@@ -91,11 +91,11 @@ Danach die **Konfigurations-ID** notieren (lange Zahl).
 
 **B3. `business_management` ergänzen:** Laut Berichten funktionieren die Instagram-Abfragen ohne diese Berechtigung nicht (Fehler „100/33“). Sie fehlt im Unified-login-Editor. Links unter **Facebook Login for Business → Konfigurationen** die Konfiguration **bearbeiten** und `business_management` hinzufügen.
 
-**B4. Weiterleitungs-URL registrieren:** Meta akzeptiert dort nur echte https-Adressen (kein `localhost`). Trag unter **„Neue Weiterleitungs-URL registrieren“** diese Meta-eigene Adresse ein und klick **Speichern**:
+**B4. Weiterleitungs-URL registrieren:** Meta akzeptiert dort nur echte https-Adressen (kein `localhost`, keine Facebook-Adressen). Trag unter **„Neue Weiterleitungs-URL registrieren“** diese Beispiel-Adresse ein und klick **Speichern**:
 ```
-https://www.facebook.com/connect/login_success.html
+https://example.com/callback
 ```
-Wird auch die abgelehnt, nimm `https://example.com/callback`. Wichtig: Im Tool muss später **genau dieselbe** Adresse im Feld „Weiterleitungs-URL“ stehen.
+Nach der Anmeldung leitet Meta dorthin weiter. Du kopierst nur die Adresse mit dem Code, die Seite selbst ist egal. Der Code ist ohne deinen App-Geheimschlüssel wertlos und nur einmal gültig. Im Tool ist diese Adresse schon voreingestellt.
 
 **B5. App-ID und App-Geheimschlüssel notieren:** Links **App-Einstellungen → Grundlegendes**: **App-ID** und **App-Geheimschlüssel** (*App Secret*, auf **Anzeigen** klicken). Den Token holst du dir später direkt aus dem Tool (Teil 5).
 

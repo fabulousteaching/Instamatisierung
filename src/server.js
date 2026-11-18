@@ -309,8 +309,10 @@ function createApp({ config, store, client, poller = null, logger = console }) {
   // ----- Anmeldung über Meta (Unified login) -----
   api.get('/oauth/settings', (req, res) => {
     const s = oauthSettings(store);
-    // Meta akzeptiert nur https-Adressen – auch für localhost.
-    res.json({ ...s, redirect_uri: s.redirect_uri || `https://${req.get('host')}/auth/callback` });
+    // Meta akzeptiert nur echte https-Adressen (kein localhost, keine Meta-Domains).
+    // example.com ist eine reservierte Beispiel-Domain: Der Code landet dort nur kurz in der Adresszeile
+    // und ist ohne App-Geheimschlüssel wertlos.
+    res.json({ ...s, redirect_uri: s.redirect_uri || 'https://example.com/callback' });
   });
 
   api.post('/oauth/start', (req, res) => {
