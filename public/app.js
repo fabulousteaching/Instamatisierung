@@ -755,7 +755,7 @@ async function renderSettings() {
       }
     }),
   );
-  const pasteInput = el('input', { type: 'text', placeholder: 'https://localhost:3000/auth/callback?code=…', autocomplete: 'off' });
+  const pasteInput = el('input', { type: 'text', placeholder: 'https://…?code=…', autocomplete: 'off' });
   const pasteBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Verbinden' });
   pasteBtn.addEventListener('click', () =>
     withBusy(pasteBtn, async () => {
@@ -772,8 +772,8 @@ async function renderSettings() {
   const step2Text = el('p', { class: 'hint' });
   const updateStep2 = () => {
     step2Text.textContent = isManual()
-      ? 'Nach der Anmeldung bei Meta zeigt der neue Tab eine Fehlerseite (z. B. „Diese Website kann keine sichere Verbindung bereitstellen“). Das ist normal! ' +
-        'Kopiere die komplette Adresse aus der Adresszeile dieses Tabs (beginnt mit https://localhost…?code=) und füge sie hier ein:'
+      ? 'Nach der Anmeldung bei Meta landet der neue Tab auf der Weiterleitungs-Adresse – die Seite ist evtl. leer, zeigt „Success“ oder einen Fehler. Das ist normal! ' +
+        'Kopiere die komplette Adresse aus der Adresszeile dieses Tabs (sie enthält „?code=“) und füge sie hier ein:'
       : 'Normalerweise kommst du nach der Anmeldung automatisch hierher zurück. Falls stattdessen eine Fehlerseite erscheint, kopiere die komplette Adresse aus der Adresszeile und füge sie hier ein:';
   };
   redirectInput.addEventListener('input', updateStep2);

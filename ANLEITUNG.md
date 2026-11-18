@@ -91,10 +91,11 @@ Danach die **Konfigurations-ID** notieren (lange Zahl).
 
 **B3. `business_management` ergänzen:** Laut Berichten funktionieren die Instagram-Abfragen ohne diese Berechtigung nicht (Fehler „100/33“). Sie fehlt im Unified-login-Editor. Links unter **Facebook Login for Business → Konfigurationen** die Konfiguration **bearbeiten** und `business_management` hinzufügen.
 
-**B4. Weiterleitungs-URL registrieren:** Auf derselben Seite unter **„Neue Weiterleitungs-URL registrieren“** genau das eintragen (mit **https**, Meta akzeptiert nichts anderes) und **Speichern**:
+**B4. Weiterleitungs-URL registrieren:** Meta akzeptiert dort nur echte https-Adressen (kein `localhost`). Trag unter **„Neue Weiterleitungs-URL registrieren“** diese Meta-eigene Adresse ein und klick **Speichern**:
 ```
-https://localhost:3000/auth/callback
+https://www.facebook.com/connect/login_success.html
 ```
+Wird auch die abgelehnt, nimm `https://example.com/callback`. Wichtig: Im Tool muss später **genau dieselbe** Adresse im Feld „Weiterleitungs-URL“ stehen.
 
 **B5. App-ID und App-Geheimschlüssel notieren:** Links **App-Einstellungen → Grundlegendes**: **App-ID** und **App-Geheimschlüssel** (*App Secret*, auf **Anzeigen** klicken). Den Token holst du dir später direkt aus dem Tool (Teil 5).
 
@@ -155,10 +156,10 @@ npm start
 2. Reiter **Einstellungen**:
    - **Variante A:** Bei **„Access Token eintragen“** den Token aus Teil 3 einfügen → **Speichern & prüfen**.
    - **Variante B:** Im Kasten **„Mit Meta verbinden“**:
-     1. App-ID, App-Geheimschlüssel und Konfigurations-ID eintragen. Die Weiterleitungs-URL ist schon richtig vorausgefüllt.
+     1. App-ID, App-Geheimschlüssel und Konfigurations-ID eintragen. Bei **Weiterleitungs-URL** genau die Adresse aus B4 eintragen.
      2. **Schritt 1 – „Bei Meta anmelden“**: Es öffnet sich ein neuer Tab. Dort bei Meta anmelden, dein Instagram-Konto auswählen und bestätigen.
-     3. Danach zeigt dieser Tab eine **Fehlerseite** (z. B. „Diese Website kann keine sichere Verbindung bereitstellen“). **Das ist normal!**
-     4. **Schritt 2**: Die komplette Adresse aus der Adresszeile dieses Tabs kopieren (beginnt mit `https://localhost:3000/auth/callback?code=`), im Dashboard-Tab einfügen und **„Verbinden“** klicken.
+     3. Danach landet dieser Tab auf der Weiterleitungs-Adresse. Die Seite ist evtl. leer oder zeigt „Success“ bzw. einen Fehler. **Das ist normal!**
+     4. **Schritt 2**: Die komplette Adresse aus der Adresszeile dieses Tabs kopieren (sie enthält `?code=`), im Dashboard-Tab einfügen und **„Verbinden“** klicken.
      Meldet das Tool „Instagram-Konto nicht automatisch gefunden“, schick mir einen Screenshot.
    ✅ Oben rechts erscheint jetzt **`@deinkonto`**, und beim Abfrage-Modus steht **„aktiv (alle 60 s)“**.
 3. Reiter **Automationen** → **+ Neue Automation**, zum Beispiel:
