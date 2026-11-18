@@ -74,7 +74,7 @@ Das Tool funktioniert mit beiden und erkennt die Token-Art automatisch.
 
 ### Variante B – „API setup with Unified login“ (neue Apps)
 
-> Meta hat diesen Ablauf erst Ende Oktober 2026 eingeführt. Die Schritte unten stammen aus ersten Erfahrungsberichten anderer Entwickler. Wenn bei dir etwas anders aussieht, schick einen Screenshot.
+> Meta hat diesen Ablauf Ende Oktober 2026 eingeführt. Die Schritte unten wurden im November 2026 mit einem echten Konto erfolgreich durchgespielt (Windows, Abfrage-Modus, App im Entwicklungsmodus). Kommentare, öffentliche Antworten und DMs an ein zweites Konto haben funktioniert.
 
 **B1. Unternehmensportfolio (kostenlos):** Bei Unified login ist ein Meta-Unternehmensportfolio Pflicht.
 1. Auf <https://business.facebook.com> ein Portfolio anlegen, falls du noch keins hast.
