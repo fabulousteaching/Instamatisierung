@@ -696,12 +696,14 @@ async function renderSettings() {
   const acc = s.account;
 
   // --- Konto ---
-  const tokenInput = el('input', { type: 'password', placeholder: 'IGAA…', autocomplete: 'off' });
+  const unified = acc.api_mode === 'facebook';
+  const tokenInput = el('input', { type: 'password', placeholder: 'IGAA… oder EAA…', autocomplete: 'off' });
+  const accountIdInput = el('input', { type: 'text', inputmode: 'numeric', placeholder: 'z. B. 17841400000000000', autocomplete: 'off' });
   const saveBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Speichern & prüfen' });
   saveBtn.addEventListener('click', () =>
     withBusy(saveBtn, async () => {
       try {
-        const res = await api('POST', '/account/token', { access_token: tokenInput.value });
+        const res = await api('POST', '/account/token', { access_token: tokenInput.value, account_id: accountIdInput.value });
         toast(`Verbunden mit @${res.username} ✓`);
         renderSettings();
       } catch (err) {
@@ -734,22 +736,30 @@ async function renderSettings() {
     }),
   );
 
+  const tokenRows = unified
+    ? [el('dt', { text: 'Gültig bis' }), el('dd', { text: 'läuft nicht ab (System-User-Token)' })]
+    : [
+        el('dt', { text: 'Zuletzt verlängert' }),
+        el('dd', { text: acc.token_refreshed_at ? formatDate(acc.token_refreshed_at) : 'noch nie (passiert automatisch wöchentlich)' }),
+        el('dt', { text: 'Gültig bis' }),
+        el('dd', { text: acc.token_expires_at ? formatDate(acc.token_expires_at) : 'unbekannt (60 Tage ab Erstellung)' }),
+      ];
+
   const accountInfo = acc.connected
     ? el(
         'dl',
         { class: 'kv' },
         el('dt', { text: 'Konto' }),
         el('dd', { text: acc.username ? `@${acc.username}${acc.name ? ` (${acc.name})` : ''}` : 'Token gespeichert, Konto unbekannt' }),
-        el('dt', { text: 'Instagram-ID' }),
+        el('dt', { text: 'Instagram-Konto-ID' }),
         el('dd', { text: acc.user_id || '–' }),
+        el('dt', { text: 'Verbindungsart' }),
+        el('dd', { text: unified ? 'Unified login (graph.facebook.com)' : 'Instagram-Login (graph.instagram.com)' }),
         el('dt', { text: 'Token gespeichert' }),
         el('dd', { text: formatDate(acc.token_saved_at) }),
-        el('dt', { text: 'Zuletzt verlängert' }),
-        el('dd', { text: acc.token_refreshed_at ? formatDate(acc.token_refreshed_at) : 'noch nie (passiert automatisch wöchentlich)' }),
-        el('dt', { text: 'Gültig bis' }),
-        el('dd', { text: acc.token_expires_at ? formatDate(acc.token_expires_at) : 'unbekannt (60 Tage ab Erstellung)' }),
-        acc.token_refresh_error ? el('dt', { text: 'Letzter Fehler' }) : null,
-        acc.token_refresh_error ? el('dd', { class: 'error', text: acc.token_refresh_error }) : null,
+        ...tokenRows,
+        acc.token_refresh_error && !unified ? el('dt', { text: 'Letzter Fehler' }) : null,
+        acc.token_refresh_error && !unified ? el('dd', { class: 'error', text: acc.token_refresh_error }) : null,
       )
     : el('p', { class: 'muted', text: 'Noch kein Konto verbunden.' });
 
@@ -759,10 +769,17 @@ async function renderSettings() {
       { class: 'card' },
       el('h2', {}, 'Instagram-Konto ', check(acc.connected, 'verbunden', 'nicht verbunden')),
       accountInfo,
-      acc.connected ? el('div', { class: 'row gap wrap' }, reloadBtn, refreshBtn) : null,
+      acc.connected ? el('div', { class: 'row gap wrap' }, reloadBtn, unified ? null : refreshBtn) : null,
       el('label', { text: acc.connected ? 'Neuen Access Token eintragen' : 'Access Token eintragen' }),
       el('div', { class: 'copy-row' }, tokenInput, saveBtn),
-      el('p', { class: 'hint', text: 'Den Token erzeugst du im Meta-Entwicklerportal unter „Instagram → API-Einrichtung mit Instagram-Login → Zugriffsschlüssel generieren“. Er wird automatisch alle 7 Tage verlängert.' }),
+      el('label', {}, 'Instagram-Konto-ID ', el('span', { class: 'muted', text: '(nur bei „Unified login“ nötig, falls das Konto nicht automatisch gefunden wird)' })),
+      accountIdInput,
+      el('p', {
+        class: 'hint',
+        text:
+          'Den Token erzeugst du im Meta-Entwicklerportal unter „Anwendungsfälle → Anpassen“: bei neuen Apps über „API setup with Unified login“ (Token läuft nicht ab), ' +
+          'bei älteren Apps über „API-Einrichtung mit Instagram-Login → Zugriffsschlüssel generieren“ (wird automatisch alle 7 Tage verlängert). Das Tool erkennt die Art automatisch.',
+      }),
     ),
   );
 

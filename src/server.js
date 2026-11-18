@@ -10,7 +10,15 @@ const { InstagramClient } = require('./instagram');
 const { verifySignature, extractComments } = require('./webhook');
 const { handleComment } = require('./automation');
 const { findMatchingRule, buildActions, validateRule } = require('./matcher');
-const { getAccessToken, saveAccessToken, syncEnvToken, refreshTokenIfDue, accountStatus } = require('./account');
+const {
+  getAccessToken,
+  getApiMode,
+  getAccountId,
+  saveAccessToken,
+  syncEnvToken,
+  refreshTokenIfDue,
+  accountStatus,
+} = require('./account');
 const { Worker } = require('./worker');
 const { Poller } = require('./poller');
 const {
@@ -263,10 +271,10 @@ function createApp({ config, store, client, poller = null, logger = console }) {
 
   api.post('/account/token', async (req, res) => {
     try {
-      const me = await saveAccessToken(store, client, req.body?.access_token);
+      const me = await saveAccessToken(store, client, req.body?.access_token, { accountId: req.body?.account_id });
       res.json({ ok: true, username: me.username, account: accountStatus(store) });
     } catch (err) {
-      throw new HttpError(400, `Token ungültig: ${err.message}`);
+      throw new HttpError(400, `Token konnte nicht gespeichert werden: ${err.message}`);
     }
   });
 
@@ -301,7 +309,7 @@ function createApp({ config, store, client, poller = null, logger = console }) {
     const token = getAccessToken(store);
     if (!token) throw new HttpError(400, 'Kein Access Token hinterlegt.');
     try {
-      await saveAccessToken(store, client, token);
+      await saveAccessToken(store, client, token, { accountId: getAccountId(store) });
     } catch (err) {
       throw new HttpError(502, `Konto konnte nicht geladen werden: ${err.message}`);
     }
@@ -355,11 +363,14 @@ async function main() {
   }
   const client = new InstagramClient({
     baseUrl: config.graphBaseUrl,
+    facebookBaseUrl: config.facebookGraphBaseUrl,
     version: config.graphVersion,
     getToken: () => getAccessToken(store),
+    getMode: () => getApiMode(store),
+    getAccountId: () => getAccountId(store),
   });
 
-  await syncEnvToken(store, client, config.initialAccessToken);
+  await syncEnvToken(store, client, config.initialAccessToken, { accountId: config.initialAccountId });
 
   const worker = new Worker({
     store,

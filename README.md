@@ -166,6 +166,7 @@ Davor gehört ein Reverse-Proxy mit https (z. B. [Caddy](https://caddyserver.com
 | `IG_APP_SECRET` | – | Instagram-App-Geheimschlüssel (für Webhook-Signaturen). Mehrere mit Komma möglich |
 | `IG_VERIFY_TOKEN` | – | Selbst gewähltes Wort für die Webhook-Bestätigung |
 | `IG_ACCESS_TOKEN` | – | Optional, Token kann auch im Dashboard eingetragen werden |
+| `IG_ACCOUNT_ID` | – | Optional, nur bei Unified login, falls das Instagram-Konto nicht automatisch gefunden wird |
 | `IG_GRAPH_VERSION` | `v25.0` | Version der Graph API |
 | `POLL_INTERVAL_SECONDS` | `0` (aus) | Abfrage-Modus: alle X Sekunden nach neuen Kommentaren schauen (mind. 30) |
 | `POLL_MEDIA_COUNT` | `5` | Abfrage-Modus: Anzahl der neuesten Beiträge, die geprüft werden (+ alle in Automationen ausgewählten) |
@@ -225,7 +226,12 @@ public/          Dashboard (HTML/CSS/JS ohne Build-Schritt)
 test/            Tests
 ```
 
-Genutzte Instagram-Endpunkte (Instagram API mit Instagram-Login, `graph.instagram.com`):
+Das Tool unterstützt zwei Varianten und erkennt sie am Token:
+
+- **Instagram-Login** (ältere Apps, Token `IGAA…`): Host `graph.instagram.com`, Konto-Endpunkte über `/me`, Token wird wöchentlich verlängert.
+- **Unified login** (neue Apps seit Ende Oktober 2026, System-User-Token `EAA…`): Host `graph.facebook.com`, Konto-Endpunkte über `/{instagram-konto-id}`. Die ID wird über `/me/assigned_instagram_accounts` gefunden oder von Hand eingetragen (`IG_ACCOUNT_ID`). Der Token läuft nicht ab.
+
+Genutzte Endpunkte (Beispiel Instagram-Login; bei Unified login `/{id}` statt `/me`):
 
 - `POST /{comment-id}/replies` – öffentliche Antwort
 - `POST /me/messages` mit `recipient.comment_id` – private Antwort (DM)

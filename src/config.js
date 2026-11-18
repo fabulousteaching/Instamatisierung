@@ -28,8 +28,11 @@ const config = {
   appSecret: process.env.IG_APP_SECRET || '',
   verifyToken: process.env.IG_VERIFY_TOKEN || '',
   initialAccessToken: process.env.IG_ACCESS_TOKEN || '',
+  // Nur bei "Unified login" nötig, falls das Konto nicht automatisch gefunden wird.
+  initialAccountId: process.env.IG_ACCOUNT_ID || '',
   // Nur ändern, wenn du weißt, was du tust (z. B. für Tests gegen einen Mock-Server).
   graphBaseUrl: (process.env.IG_GRAPH_BASE_URL || 'https://graph.instagram.com').replace(/\/+$/, ''),
+  facebookGraphBaseUrl: (process.env.FB_GRAPH_BASE_URL || 'https://graph.facebook.com').replace(/\/+$/, ''),
   graphVersion: process.env.IG_GRAPH_VERSION || 'v25.0',
 
   // Datenbank

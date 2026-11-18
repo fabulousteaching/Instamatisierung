@@ -46,32 +46,56 @@ In der **Instagram-App** auf dem Handy:
 4. **Unternehmen** (*Business*): **„Ich möchte noch kein Unternehmensportfolio verbinden“** (*I don't want to connect a business portfolio yet*) → *Weiter*.
 5. Übersicht prüfen → **App erstellen** (*Create app*). Eventuell musst du dein Facebook-Passwort nochmal eingeben.
 
-### 3.2 Berechtigungen prüfen
+### 3.2 Welche Variante hat deine App?
 
-1. Im App-Dashboard links auf **Anwendungsfälle** (*Use cases*) → beim Instagram-Anwendungsfall auf **Anpassen** (*Customize*).
-2. Unter **Berechtigungen** (*Permissions*) sollten diese drei stehen. Fehlt eine, klickst du daneben auf *Hinzufügen*:
-   - `instagram_business_basic`
-   - `instagram_business_manage_comments`
-   - `instagram_business_manage_messages`
+Links auf **Anwendungsfälle** → beim Instagram-Anwendungsfall auf **Anpassen**. Im linken Kasten siehst du einen dieser Einträge:
 
-### 3.3 Dein Instagram-Konto als Tester eintragen
+- **„API setup with Unified login“** → weiter mit **Variante B**. Das ist bei allen Apps so, die seit Ende Oktober 2026 erstellt wurden.
+- **„API-Einrichtung mit Instagram-Login“** → weiter mit **Variante A** (ältere Apps).
 
-1. Links im Menü: **App-Rollen → Rollen** (*App roles → Roles*) → **Personen hinzufügen** (*Add People*).
-   ⚠️ Nicht **„Testnutzer“** (*Test users*) nehmen: Das sind simulierte Facebook-Konten, die wir nicht brauchen.
-2. Rolle **„Instagram-Tester“** (*Instagram Tester*) wählen und deinen **Instagram-Benutzernamen** eingeben → *Hinzufügen*.
-   *(Gibt es die Rolle „Instagram-Tester“ nicht, fehlt der Instagram-Anwendungsfall: siehe 3.1, Schritt 3, bzw. unter **Anwendungsfälle** hinzufügen.)*
-3. **Einladung annehmen:** Öffne im Browser <https://www.instagram.com/accounts/manage_access/> (Instagram → Einstellungen → *Apps und Websites*), wechsle zum Reiter **„Tester-Einladungen“** (*Tester Invites*) und klicke auf **Annehmen**.
+Das Tool funktioniert mit beiden und erkennt die Token-Art automatisch.
 
-### 3.4 Zugangsschlüssel (Access Token) erzeugen
+---
 
-1. Zurück zu **Anwendungsfälle → Anpassen → API-Einrichtung mit Instagram-Login** (*API setup with Instagram login*).
-2. Bei **„1. Zugriffsschlüssel generieren“** (*Generate access tokens*) auf **„Konto hinzufügen“** (*Add account*) klicken, mit deinem Instagram-Konto anmelden und alles erlauben.
-3. Neben deinem Konto auf **„Token generieren“** (*Generate token*) klicken, den Hinweis bestätigen und den langen Text (beginnt meist mit `IGAA…`) **kopieren**.
-4. Speichere ihn kurz in einer Notiz. Er wird nur einmal angezeigt (zur Not einfach neu generieren). **Gib ihn niemandem weiter**, er ist wie ein Passwort.
+### Variante A – „API-Einrichtung mit Instagram-Login“ (ältere Apps)
 
-✅ **Fertig, wenn:** Du hast einen Token kopiert.
+**A1. Berechtigungen prüfen:** Unter *Berechtigungen und Features* sollten diese drei stehen (sonst *Hinzufügen*):
+`instagram_business_basic`, `instagram_business_manage_comments`, `instagram_business_manage_messages`
 
-> Die Schritte „Webhooks konfigurieren“ und „Business Login einrichten“ auf dieser Seite **überspringst** du. Die braucht man im Abfrage-Modus nicht.
+**A2. Dein Instagram-Konto als Tester eintragen:**
+1. Links: **App-Rollen → Rollen** → **Personen hinzufügen**.
+   ⚠️ Nicht **„Testnutzer“** nehmen: Das sind simulierte Facebook-Konten, die wir nicht brauchen.
+2. Rolle **„Instagram-Tester“** wählen, deinen Instagram-Benutzernamen eingeben → *Hinzufügen*.
+3. Einladung annehmen: <https://www.instagram.com/accounts/manage_access/> → Reiter **„Tester-Einladungen“** → **Annehmen**.
+
+**A3. Token erzeugen:** *API-Einrichtung mit Instagram-Login* → **„1. Zugriffsschlüssel generieren“** → **Konto hinzufügen** → mit Instagram anmelden → **Token generieren** → kopieren (beginnt mit `IGAA…`).
+
+---
+
+### Variante B – „API setup with Unified login“ (neue Apps)
+
+> Meta hat diesen Ablauf erst Ende Oktober 2026 eingeführt. Die Schritte unten stammen aus ersten Erfahrungsberichten anderer Entwickler. Wenn bei dir etwas anders aussieht, schick einen Screenshot.
+
+**B1. Unternehmensportfolio (kostenlos):** Bei Unified login ist ein Meta-Unternehmensportfolio Pflicht.
+1. Auf <https://business.facebook.com> ein Portfolio anlegen, falls du noch keins hast.
+2. Dort unter **Einstellungen → Konten → Instagram-Konten** dein Instagram-Konto hinzufügen.
+3. Die App muss zu diesem Portfolio gehören. Meta fragt das bei der Einrichtung meist ab („Business portfolio selection is mandatory“).
+
+**B2. Konfiguration anlegen:** In **API setup with Unified login** eine **Konfiguration** erstellen mit:
+- **Zugriffsschlüssel-Art:** *System-User-Zugriffsschlüssel* (*System-user access token*)
+- **Ablauf:** *Nie* (*Never*)
+- **Assets:** dein **Instagram-Konto**
+- **Berechtigungen:** `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`
+
+**B3. `business_management` ergänzen:** Laut Berichten funktionieren die Instagram-Abfragen ohne diese Berechtigung nicht (Fehler „100/33“). Sie fehlt im Unified-login-Editor. Links unter **Facebook Login for Business → Konfigurationen** die Konfiguration **bearbeiten** und `business_management` hinzufügen.
+
+**B4. Token erzeugen:** Token für dein Instagram-Konto erzeugen und kopieren (beginnt meist mit `EAA…`, läuft nicht ab). Wenn eine **Instagram-Konto-ID** angezeigt wird (lange Zahl, z. B. `1784…`), notiere sie auch.
+
+---
+
+✅ **Fertig, wenn:** Du hast einen Token kopiert. **Gib ihn niemandem weiter**, er ist wie ein Passwort.
+
+> Die Schritte „Webhooks konfigurieren“ und „Business Login einrichten“ **überspringst** du. Die braucht man im Abfrage-Modus nicht.
 
 ---
 
@@ -122,6 +146,7 @@ npm start
 
 1. Öffne im Browser **<http://localhost:3000>** und melde dich mit deinem Passwort an.
 2. Reiter **Einstellungen** → bei **„Access Token eintragen“** den Token aus Teil 3 einfügen → **Speichern & prüfen**.
+   Bei Variante B: Meldet das Tool „Instagram-Konto nicht automatisch gefunden“, trägst du zusätzlich die **Instagram-Konto-ID** ins Feld darunter ein.
    ✅ Oben rechts erscheint jetzt **`@deinkonto`**, und beim Abfrage-Modus steht **„aktiv (alle 60 s)“**.
 3. Reiter **Automationen** → **+ Neue Automation**, zum Beispiel:
    - **Name:** Freebie per DM
@@ -144,7 +169,8 @@ npm start
 
 Du brauchst ein **zweites Instagram-Konto** zum Kommentieren, z. B. von einer Freundin oder ein Zweitkonto. Eigene Kommentare ignoriert das Tool absichtlich.
 
-1. **Zweites Konto auch als Tester eintragen** (wie in Teil 3.3) und die Einladung mit diesem Konto annehmen. Solange die App im Entwicklungsmodus ist, lässt Meta DMs oft nur an Tester zu.
+1. **Variante A:** Das zweite Konto auch als Instagram-Tester eintragen (wie in A2) und die Einladung mit diesem Konto annehmen. Solange die App im Entwicklungsmodus ist, lässt Meta DMs oft nur an Tester zu.
+   **Variante B:** Erst einmal ohne diesen Schritt testen.
 2. Mit dem zweiten Konto unter einem deiner Beiträge **„Info“** kommentieren.
 3. Nach **höchstens ca. 1 Minute** plus deiner eingestellten Verzögerung sollte die **DM** ankommen und die **öffentliche Antwort** erscheinen.
 4. Im Reiter **Aktivität** siehst du, was passiert ist. Bei einem Fehler steht dort die Meldung von Instagram, die kannst du mir einfach schicken.
@@ -170,7 +196,7 @@ Klappt im Test alles, probierst du es mit einem Konto, das **kein** Tester ist:
 - **Starten:** Terminal im Ordner öffnen (Teil 4.3) → `npm start` → Fenster offen lassen.
 - **Beenden:** Im Terminal **Strg + C** drücken oder das Fenster schließen.
 - **Dashboard:** <http://localhost:3000>
-- **Token:** Er wird automatisch alle 7 Tage verlängert, solange das Tool zwischendurch läuft. War es über 60 Tage aus, erzeugst du in Teil 3.4 einfach einen neuen Token und trägst ihn ein.
+- **Token:** Variante B (Unified login): läuft nicht ab. Variante A: wird automatisch alle 7 Tage verlängert, solange das Tool zwischendurch läuft. War es über 60 Tage aus, erzeugst du einfach einen neuen Token (A3) und trägst ihn ein.
 - **Rund um die Uhr, ohne dass dein Computer an sein muss:** Das geht auch kostenlos, z. B. mit Oracle Cloud „Always Free“, ist aber technischer und braucht eine Kreditkarte zur Verifizierung. Sag Bescheid, wenn du das möchtest.
 
 ## Hilfe
@@ -178,7 +204,8 @@ Klappt im Test alles, probierst du es mit einem Konto, das **kein** Tester ist:
 | Problem | Lösung |
 | --- | --- |
 | `npm` wird nicht gefunden | Node.js installieren (Teil 4.1), danach das Terminal **neu öffnen**. |
-| „Token ungültig“ beim Speichern | Token neu generieren (Teil 3.4) und vollständig kopieren, ohne Leerzeichen am Anfang oder Ende. |
-| „Konto hinzufügen“ klappt nicht | Ist das Konto professionell und öffentlich (Teil 1)? Hast du die Tester-Einladung angenommen (Teil 3.3)? |
+| „Token konnte nicht gespeichert werden“ | Token neu erzeugen (A3 bzw. B4) und vollständig kopieren, ohne Leerzeichen am Anfang oder Ende. |
+| „Konto hinzufügen“ klappt nicht | Ist das Konto professionell und öffentlich (Teil 1)? Variante A: Hast du die Tester-Einladung angenommen (A2)? Variante B: Ist das Konto im Unternehmensportfolio (B1)? |
+| Fehler „100/33“ (Variante B) | `business_management` fehlt in der Konfiguration (B3). Danach den Token neu erzeugen. |
 | Kommentar wird nicht erkannt | Läuft das Terminal-Fenster noch? Steht im Reiter **Aktivität** etwas? Unter **Testen** prüfen, ob das Schlüsselwort passt. |
 | DM fehlgeschlagen | Fehlermeldung im Reiter **Aktivität** ansehen. Meist ist die kommentierende Person kein Tester (siehe Teil 6/7). |

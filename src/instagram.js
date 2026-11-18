@@ -1,16 +1,27 @@
 'use strict';
 
 /**
- * Schlanker Client für die "Instagram API mit Instagram-Login"
- * (graph.instagram.com). Benötigte Berechtigungen:
- *   - instagram_business_basic
- *   - instagram_business_manage_comments  (Kommentare lesen/beantworten, Private Replies)
- *   - instagram_business_manage_messages  (Direktnachrichten)
+ * Schlanker Client für die Instagram-APIs von Meta. Unterstützt zwei Varianten:
+ *
+ * 1. "instagram" – Instagram API mit Instagram-Login (ältere Apps)
+ *    Host graph.instagram.com, Token beginnt mit "IG…", Endpunkte über /me.
+ *    Berechtigungen: instagram_business_basic, instagram_business_manage_comments,
+ *    instagram_business_manage_messages
+ *
+ * 2. "facebook" – "API setup with Unified login" (neue Apps seit Ende Oktober 2026)
+ *    bzw. Facebook-Login. Host graph.facebook.com, meist ein System-User-Token ("EAA…"),
+ *    Endpunkte über die Instagram-Konto-ID.
+ *    Berechtigungen: instagram_basic, instagram_manage_comments, instagram_manage_messages,
+ *    business_management
+ *
+ * Welche Variante gilt, wird beim Speichern des Tokens automatisch erkannt.
  */
 
 // Fehlercodes der Graph API, bei denen sich ein erneuter Versuch lohnt
 // (Rate-Limits, temporäre Störungen).
 const TRANSIENT_CODES = new Set([1, 2, 4, 17, 32, 341, 368, 613]);
+
+const IG_USER_FIELDS = 'id,username,name,profile_picture_url';
 
 class GraphApiError extends Error {
   constructor(message, { status = 0, code = null, subcode = null, transient = false, fbtraceId = null } = {}) {
@@ -31,30 +42,63 @@ class GraphApiError extends Error {
   }
 }
 
+/** Erkennt anhand des Tokens, welche API-Variante gilt. */
+function detectMode(token) {
+  return /^IG/.test(String(token || '').trim()) ? 'instagram' : 'facebook';
+}
+
 class InstagramClient {
   /**
    * @param {object} opts
-   * @param {string} opts.baseUrl     z. B. https://graph.instagram.com
-   * @param {string} opts.version     z. B. v25.0
-   * @param {() => string|null} opts.getToken  liefert den aktuellen Access Token
+   * @param {string} opts.baseUrl          Host für Instagram-Login, z. B. https://graph.instagram.com
+   * @param {string} opts.facebookBaseUrl  Host für Unified/Facebook-Login, z. B. https://graph.facebook.com
+   * @param {string} opts.version          z. B. v25.0
+   * @param {() => string|null} opts.getToken      aktueller Access Token
+   * @param {() => string|null} [opts.getMode]     "instagram" oder "facebook"
+   * @param {() => string|null} [opts.getAccountId] Instagram-Konto-ID (für "facebook")
    * @param {typeof fetch} [opts.fetchImpl]
    */
-  constructor({ baseUrl, version, getToken, fetchImpl = globalThis.fetch, timeoutMs = 15000 }) {
+  constructor({
+    baseUrl = 'https://graph.instagram.com',
+    facebookBaseUrl = 'https://graph.facebook.com',
+    version,
+    getToken,
+    getMode = () => null,
+    getAccountId = () => null,
+    fetchImpl = globalThis.fetch,
+    timeoutMs = 15000,
+  }) {
     this.baseUrl = baseUrl;
+    this.facebookBaseUrl = facebookBaseUrl;
     this.version = version;
     this.getToken = getToken;
+    this.getMode = getMode;
+    this.getAccountId = getAccountId;
     this.fetch = fetchImpl;
     this.timeoutMs = timeoutMs;
   }
 
-  async request(method, path, { query = {}, json, token, versioned = true } = {}) {
+  mode() {
+    return this.getMode() || detectMode(this.getToken());
+  }
+
+  /** Pfad-Präfix für Konto-Endpunkte: "/me" bzw. "/<Instagram-Konto-ID>". */
+  accountPath() {
+    if (this.mode() === 'instagram') return '/me';
+    const id = this.getAccountId();
+    if (!id) throw new GraphApiError('Instagram-Konto-ID fehlt. Bitte Token in den Einstellungen neu speichern.');
+    return `/${encodeURIComponent(id)}`;
+  }
+
+  async request(method, path, { query = {}, json, token, mode, versioned = true } = {}) {
     const accessToken = token ?? this.getToken();
     if (!accessToken) {
       throw new GraphApiError('Kein Instagram Access Token hinterlegt. Bitte in den Einstellungen eintragen.');
     }
 
+    const base = (mode ?? this.mode()) === 'instagram' ? this.baseUrl : this.facebookBaseUrl;
     const prefix = versioned ? `/${this.version}` : '';
-    const url = new URL(`${this.baseUrl}${prefix}${path}`);
+    const url = new URL(`${base}${prefix}${path}`);
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     }
@@ -97,17 +141,59 @@ class InstagramClient {
     return body;
   }
 
-  /** Infos zum verbundenen Instagram-Konto. */
-  getMe(token) {
-    return this.request('GET', '/me', {
-      query: { fields: 'id,user_id,username,name,account_type,profile_picture_url' },
-      token,
-    });
+  /**
+   * Prüft einen Token und ermittelt das Instagram-Konto.
+   * @returns {Promise<{mode, user_id, id, username, name, profile_picture_url}>}
+   */
+  async resolveAccount(token, accountId) {
+    const mode = detectMode(token);
+
+    if (mode === 'instagram') {
+      const me = await this.request('GET', '/me', {
+        query: { fields: 'id,user_id,username,name,account_type,profile_picture_url' },
+        token,
+        mode,
+      });
+      return { mode, ...me, user_id: me.user_id ?? me.id };
+    }
+
+    // Unified login / Facebook-Login
+    // Ungültiger Token (Code 190) oder Netzwerkprobleme sofort melden; andere Fehler
+    // (z. B. fehlende Berechtigung für diesen Suchweg) nur überspringen.
+    const tolerate = (err) => {
+      if (err.code === 190 || err.transient || err.code === null) throw err;
+      return null;
+    };
+    let id = accountId ? String(accountId).trim() : null;
+    if (!id) {
+      const assigned = await this.request('GET', '/me/assigned_instagram_accounts', {
+        query: { fields: 'id,username' },
+        token,
+        mode,
+      }).catch(tolerate);
+      id = assigned?.data?.[0]?.id ?? null;
+    }
+    if (!id) {
+      const pages = await this.request('GET', '/me/accounts', {
+        query: { fields: 'instagram_business_account{id}' },
+        token,
+        mode,
+      }).catch(tolerate);
+      id = pages?.data?.find((p) => p.instagram_business_account)?.instagram_business_account.id ?? null;
+    }
+    if (!id) {
+      throw new GraphApiError(
+        'Instagram-Konto nicht automatisch gefunden. Bitte zusätzlich die Instagram-Konto-ID eintragen ' +
+          '(steht im Meta-Portal bei „API setup with Unified login“ bzw. in den Unternehmenseinstellungen unter Instagram-Konten).',
+      );
+    }
+    const account = await this.request('GET', `/${encodeURIComponent(id)}`, { query: { fields: IG_USER_FIELDS }, token, mode });
+    return { mode, ...account, user_id: account.id };
   }
 
   /** Die letzten Beiträge des Kontos (für die Auswahl in einer Automation). */
   async listMedia(limit = 30) {
-    const body = await this.request('GET', '/me/media', {
+    const body = await this.request('GET', `${this.accountPath()}/media`, {
       query: {
         fields: 'id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,comments_count',
         limit,
@@ -147,18 +233,23 @@ class InstagramClient {
           },
         }
       : { text };
-    return this.request('POST', '/me/messages', {
+    return this.request('POST', `${this.accountPath()}/messages`, {
       json: { recipient: { comment_id: commentId }, message },
     });
   }
 
   /** Abonniert die Kommentar-Webhooks für das verbundene Konto. */
   subscribeWebhooks(fields = ['comments']) {
-    return this.request('POST', '/me/subscribed_apps', { query: { subscribed_fields: fields.join(',') } });
+    return this.request('POST', `${this.accountPath()}/subscribed_apps`, {
+      query: { subscribed_fields: fields.join(',') },
+    });
   }
 
-  /** Verlängert einen Long-Lived Token um weitere 60 Tage. */
+  /** Verlängert einen Long-Lived Token um weitere 60 Tage (nur Instagram-Login). */
   refreshToken() {
+    if (this.mode() !== 'instagram') {
+      throw new GraphApiError('Dieser Token (Unified/Facebook-Login) muss nicht verlängert werden.');
+    }
     return this.request('GET', '/refresh_access_token', {
       query: { grant_type: 'ig_refresh_token' },
       versioned: false,
@@ -166,4 +257,4 @@ class InstagramClient {
   }
 }
 
-module.exports = { InstagramClient, GraphApiError };
+module.exports = { InstagramClient, GraphApiError, detectMode };
