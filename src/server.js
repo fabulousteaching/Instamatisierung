@@ -369,7 +369,16 @@ function createApp({ config, store, client, poller = null, logger = console }) {
   });
 
   // Dashboard (statische Dateien)
-  app.use(express.static(path.join(__dirname, '..', 'public'), { index: 'index.html', maxAge: '1h' }));
+  app.use(
+    express.static(path.join(__dirname, '..', 'public'), {
+      index: 'index.html',
+      maxAge: '1h',
+      // Startseite und App-Datei nie zwischenspeichern, damit Updates sofort ankommen
+      setHeaders: (res, filePath) => {
+        if (/\.(html|webmanifest)$/.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+      },
+    }),
+  );
 
   // Fehlerbehandlung
   // eslint-disable-next-line no-unused-vars
