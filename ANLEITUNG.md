@@ -81,19 +81,26 @@ Das Tool funktioniert mit beiden und erkennt die Token-Art automatisch.
 2. Dort unter **Einstellungen → Konten → Instagram-Konten** dein Instagram-Konto hinzufügen.
 3. Die App muss zu diesem Portfolio gehören. Meta fragt das bei der Einrichtung meist ab („Business portfolio selection is mandatory“).
 
-**B2. Konfiguration anlegen:** In **API setup with Unified login** eine **Konfiguration** erstellen mit:
-- **Zugriffsschlüssel-Art:** *System-User-Zugriffsschlüssel* (*System-user access token*)
-- **Ablauf:** *Nie* (*Never*)
-- **Assets:** dein **Instagram-Konto**
-- **Berechtigungen:** `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`
+**B2. Konfiguration anlegen:** In **API setup with Unified login** bei *„1. Deine App konfigurieren“* auf **„Neue Konfiguration erstellen“** klicken und die vorgeschlagenen Werte übernehmen:
+- **Login-Option:** Allgemein
+- **Zugriffstoken:** *Systemnutzer-Zugriffstoken (SUAT)*, **Ablaufdatum:** *Nie*
+- **Business-Assets:** dein **Instagram-Konto** (Werbekonto nicht nötig)
+- **Berechtigungen:** wie vorgeschlagen (enthält `instagram_basic`, `instagram_manage_comments`, `instagram_manage_messages`)
+
+Danach die **Konfigurations-ID** notieren (lange Zahl).
 
 **B3. `business_management` ergänzen:** Laut Berichten funktionieren die Instagram-Abfragen ohne diese Berechtigung nicht (Fehler „100/33“). Sie fehlt im Unified-login-Editor. Links unter **Facebook Login for Business → Konfigurationen** die Konfiguration **bearbeiten** und `business_management` hinzufügen.
 
-**B4. Token erzeugen:** Token für dein Instagram-Konto erzeugen und kopieren (beginnt meist mit `EAA…`, läuft nicht ab). Wenn eine **Instagram-Konto-ID** angezeigt wird (lange Zahl, z. B. `1784…`), notiere sie auch.
+**B4. Weiterleitungs-URL registrieren:** Auf derselben Seite unter **„Neue Weiterleitungs-URL registrieren“** genau das eintragen und **Speichern**:
+```
+http://localhost:3000/auth/callback
+```
+
+**B5. App-ID und App-Geheimschlüssel notieren:** Links **App-Einstellungen → Grundlegendes**: **App-ID** und **App-Geheimschlüssel** (*App Secret*, auf **Anzeigen** klicken). Den Token holst du dir später direkt aus dem Tool (Teil 5).
 
 ---
 
-✅ **Fertig, wenn:** Du hast einen Token kopiert. **Gib ihn niemandem weiter**, er ist wie ein Passwort.
+✅ **Fertig, wenn:** Variante A: Du hast einen Token kopiert. Variante B: Du hast App-ID, App-Geheimschlüssel und Konfigurations-ID. **Gib Token und Geheimschlüssel niemandem weiter**, sie sind wie Passwörter.
 
 > Die Schritte „Webhooks konfigurieren“ und „Business Login einrichten“ **überspringst** du. Die braucht man im Abfrage-Modus nicht.
 
@@ -145,8 +152,10 @@ npm start
 ## Teil 5 – Verbinden und erste Automation (5 Min.)
 
 1. Öffne im Browser **<http://localhost:3000>** und melde dich mit deinem Passwort an.
-2. Reiter **Einstellungen** → bei **„Access Token eintragen“** den Token aus Teil 3 einfügen → **Speichern & prüfen**.
-   Bei Variante B: Meldet das Tool „Instagram-Konto nicht automatisch gefunden“, trägst du zusätzlich die **Instagram-Konto-ID** ins Feld darunter ein.
+2. Reiter **Einstellungen**:
+   - **Variante A:** Bei **„Access Token eintragen“** den Token aus Teil 3 einfügen → **Speichern & prüfen**.
+   - **Variante B:** Im Kasten **„Mit Meta verbinden“** App-ID, App-Geheimschlüssel und Konfigurations-ID eintragen → **„Bei Meta anmelden & verbinden“**. Bei Meta anmelden, dein Instagram-Konto auswählen und bestätigen. Danach landest du wieder im Dashboard.
+     *Kommt nach der Anmeldung eine Fehlerseite?* Dann die komplette Adresse aus der Browserzeile unter **„Die Rückleitung hat nicht geklappt?“** einfügen. Meldet das Tool „Instagram-Konto nicht automatisch gefunden“, schick mir einen Screenshot.
    ✅ Oben rechts erscheint jetzt **`@deinkonto`**, und beim Abfrage-Modus steht **„aktiv (alle 60 s)“**.
 3. Reiter **Automationen** → **+ Neue Automation**, zum Beispiel:
    - **Name:** Freebie per DM
@@ -204,8 +213,9 @@ Klappt im Test alles, probierst du es mit einem Konto, das **kein** Tester ist:
 | Problem | Lösung |
 | --- | --- |
 | `npm` wird nicht gefunden | Node.js installieren (Teil 4.1), danach das Terminal **neu öffnen**. |
-| „Token konnte nicht gespeichert werden“ | Token neu erzeugen (A3 bzw. B4) und vollständig kopieren, ohne Leerzeichen am Anfang oder Ende. |
+| „Token konnte nicht gespeichert werden“ | Token neu erzeugen (A3) bzw. erneut bei Meta anmelden (Teil 5) und vollständig kopieren, ohne Leerzeichen am Anfang oder Ende. |
 | „Konto hinzufügen“ klappt nicht | Ist das Konto professionell und öffentlich (Teil 1)? Variante A: Hast du die Tester-Einladung angenommen (A2)? Variante B: Ist das Konto im Unternehmensportfolio (B1)? |
-| Fehler „100/33“ (Variante B) | `business_management` fehlt in der Konfiguration (B3). Danach den Token neu erzeugen. |
+| Fehler „100/33“ (Variante B) | `business_management` fehlt in der Konfiguration (B3). Danach erneut „Bei Meta anmelden & verbinden“. |
+| Meta meldet „URL blockiert“ / „redirect_uri“ (Variante B) | Die Weiterleitungs-URL bei Meta (B4) muss **exakt** mit der im Tool übereinstimmen. |
 | Kommentar wird nicht erkannt | Läuft das Terminal-Fenster noch? Steht im Reiter **Aktivität** etwas? Unter **Testen** prüfen, ob das Schlüsselwort passt. |
 | DM fehlgeschlagen | Fehlermeldung im Reiter **Aktivität** ansehen. Meist ist die kommentierende Person kein Tester (siehe Teil 6/7). |

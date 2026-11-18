@@ -695,6 +695,93 @@ async function renderSettings() {
   if (!s) return;
   const acc = s.account;
 
+  // --- Mit Meta verbinden (Unified login) ---
+  let oauth = { app_id: '', config_id: '', redirect_uri: `${location.origin}/auth/callback`, has_secret: false };
+  try {
+    oauth = await api('GET', '/oauth/settings');
+  } catch {
+    /* Standardwerte */
+  }
+  const appIdInput = el('input', { type: 'text', inputmode: 'numeric', value: oauth.app_id, placeholder: 'z. B. 1004342882734337', autocomplete: 'off' });
+  const appSecretInput = el('input', {
+    type: 'password',
+    placeholder: oauth.has_secret ? '•••••••• (gespeichert – leer lassen, um ihn zu behalten)' : '32 Zeichen, z. B. 3f9c…',
+    autocomplete: 'off',
+  });
+  const configIdInput = el('input', { type: 'text', inputmode: 'numeric', value: oauth.config_id, placeholder: 'z. B. 1234567890123456', autocomplete: 'off' });
+  const redirectInput = el('input', { type: 'text', value: oauth.redirect_uri });
+  const copyRedirectBtn = el('button', { class: 'btn', type: 'button', text: 'Kopieren' });
+  copyRedirectBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(redirectInput.value);
+      toast('Kopiert ✓');
+    } catch {
+      redirectInput.select();
+    }
+  });
+  const loginBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Bei Meta anmelden & verbinden' });
+  loginBtn.addEventListener('click', () =>
+    withBusy(loginBtn, async () => {
+      try {
+        const res = await api('POST', '/oauth/start', {
+          app_id: appIdInput.value,
+          app_secret: appSecretInput.value,
+          config_id: configIdInput.value,
+          redirect_uri: redirectInput.value,
+        });
+        window.location.href = res.login_url;
+      } catch (err) {
+        toast(err.message, true);
+      }
+    }),
+  );
+  const pasteInput = el('input', { type: 'text', placeholder: 'Komplette Adresse aus der Browserzeile, z. B. https://…?code=…', autocomplete: 'off' });
+  const pasteBtn = el('button', { class: 'btn', type: 'button', text: 'Übernehmen' });
+  pasteBtn.addEventListener('click', () =>
+    withBusy(pasteBtn, async () => {
+      try {
+        const res = await api('POST', '/oauth/exchange', { input: pasteInput.value });
+        toast(`Verbunden mit @${res.username} ✓`);
+        renderSettings();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    }),
+  );
+
+  box.append(
+    el(
+      'div',
+      { class: 'card' },
+      el('h2', { text: 'Mit Meta verbinden (für neue Apps mit „Unified login“)' }),
+      el('p', {
+        class: 'hint',
+        text: 'Trage die Werte aus dem Meta-Entwicklerportal ein und klicke auf „Bei Meta anmelden“. Danach holt das Tool den Token automatisch ab.',
+      }),
+      el(
+        'div',
+        { class: 'grid-2' },
+        el('div', {}, el('label', {}, 'App-ID ', el('span', { class: 'muted', text: '(App-Einstellungen → Grundlegendes)' })), appIdInput),
+        el('div', {}, el('label', {}, 'App-Geheimschlüssel ', el('span', { class: 'muted', text: '(gleiche Seite, „Anzeigen“)' })), appSecretInput),
+      ),
+      el('label', {}, 'Konfigurations-ID ', el('span', { class: 'muted', text: '(bei „API setup with Unified login“ nach dem Erstellen der Konfiguration)' })),
+      configIdInput,
+      el('label', {}, 'Weiterleitungs-URL ', el('span', { class: 'muted', text: '(genau so bei Meta unter „Neue Weiterleitungs-URL registrieren“ eintragen)' })),
+      el('div', { class: 'copy-row' }, redirectInput, copyRedirectBtn),
+      el('div', { class: 'row gap wrap' }, loginBtn),
+      el(
+        'details',
+        { class: 'hint' },
+        el('summary', { text: 'Die Rückleitung hat nicht geklappt?' }),
+        el('p', {
+          text:
+            'Wenn nach der Anmeldung bei Meta eine Fehlerseite kommt (z. B. „Seite nicht erreichbar“), kopiere die komplette Adresse aus der Browserzeile und füge sie hier ein:',
+        }),
+        el('div', { class: 'copy-row' }, pasteInput, pasteBtn),
+      ),
+    ),
+  );
+
   // --- Konto ---
   const unified = acc.api_mode === 'facebook';
   const tokenInput = el('input', { type: 'password', placeholder: 'IGAA… oder EAA…', autocomplete: 'off' });
@@ -881,10 +968,20 @@ async function renderSettings() {
 // ---------------------------------------------------------------------------
 
 (async () => {
+  const params = new URLSearchParams(location.search);
+  const oauthOk = params.get('oauth') === 'ok';
+  const oauthError = params.get('oauth_error');
+  if (oauthOk || oauthError) history.replaceState(null, '', location.pathname);
   try {
     const { authenticated } = await api('GET', '/session');
-    if (authenticated) await showApp();
-    else showLogin();
+    if (authenticated) {
+      await showApp();
+      if (oauthOk || oauthError) {
+        showTab('settings');
+        if (oauthOk) toast(`Verbunden mit @${params.get('username') || 'Instagram'} ✓`);
+        else toast(oauthError, true);
+      }
+    } else showLogin();
   } catch {
     showLogin();
   }

@@ -153,6 +153,34 @@ test('Server: Webhook, Anmeldung und Automationen', async (t) => {
     assert.equal(media.length, 1);
   });
 
+  await t.test('Meta-Anmeldung: Start und Rücksprung', async () => {
+    const start = await authed('POST', '/oauth/start', {
+      app_id: '1004342882734337',
+      app_secret: '0123456789abcdef0123456789abcdef',
+      config_id: '555555555555',
+      redirect_uri: `${base}/auth/callback`,
+    });
+    assert.equal(start.status, 200);
+    const { login_url } = await start.json();
+    assert.match(login_url, /^https:\/\/www\.facebook\.com\/v25\.0\/dialog\/oauth\?/);
+
+    // Ohne Anmeldung im Dashboard -> zurück mit Fehlermeldung
+    const anon = await fetch(`${base}/auth/callback?code=x&state=y`, { redirect: 'manual' });
+    assert.equal(anon.status, 302);
+    assert.match(anon.headers.get('location'), /oauth_error=/);
+
+    // Abbruch bei Meta wird gemeldet
+    const denied = await fetch(`${base}/auth/callback?error=access_denied&error_description=Abgebrochen`, {
+      headers: { Cookie: cookie },
+      redirect: 'manual',
+    });
+    assert.match(decodeURIComponent(denied.headers.get('location')), /Abgebrochen/);
+
+    const settings = await (await authed('GET', '/oauth/settings')).json();
+    assert.equal(settings.has_secret, true);
+    assert.equal(settings.app_secret, undefined, 'Geheimschlüssel wird nie ausgeliefert');
+  });
+
   await t.test('Dashboard wird ausgeliefert', async () => {
     const res = await fetch(`${base}/`);
     assert.equal(res.status, 200);

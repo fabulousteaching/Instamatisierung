@@ -90,9 +90,9 @@ class InstagramClient {
     return `/${encodeURIComponent(id)}`;
   }
 
-  async request(method, path, { query = {}, json, token, mode, versioned = true } = {}) {
-    const accessToken = token ?? this.getToken();
-    if (!accessToken) {
+  async request(method, path, { query = {}, json, token, mode, versioned = true, noToken = false } = {}) {
+    const accessToken = noToken ? null : token ?? this.getToken();
+    if (!noToken && !accessToken) {
       throw new GraphApiError('Kein Instagram Access Token hinterlegt. Bitte in den Einstellungen eintragen.');
     }
 
@@ -102,7 +102,7 @@ class InstagramClient {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
     }
-    url.searchParams.set('access_token', accessToken);
+    if (accessToken) url.searchParams.set('access_token', accessToken);
 
     const init = { method, headers: {}, signal: AbortSignal.timeout(this.timeoutMs) };
     if (json !== undefined) {
@@ -242,6 +242,15 @@ class InstagramClient {
   subscribeWebhooks(fields = ['comments']) {
     return this.request('POST', `${this.accountPath()}/subscribed_apps`, {
       query: { subscribed_fields: fields.join(',') },
+    });
+  }
+
+  /** Tauscht den Code aus der Meta-Anmeldung (Unified login) gegen einen Token. */
+  exchangeCode({ appId, appSecret, redirectUri, code }) {
+    return this.request('GET', '/oauth/access_token', {
+      query: { client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code },
+      mode: 'facebook',
+      noToken: true,
     });
   }
 

@@ -19,6 +19,7 @@ const {
   refreshTokenIfDue,
   accountStatus,
 } = require('./account');
+const { oauthSettings, saveOAuthSettings, buildLoginUrl, parseRedirectInput, completeLogin } = require('./oauth');
 const { Worker } = require('./worker');
 const { Poller } = require('./poller');
 const {
@@ -305,6 +306,32 @@ function createApp({ config, store, client, poller = null, logger = console }) {
     }
   });
 
+  // ----- Anmeldung über Meta (Unified login) -----
+  api.get('/oauth/settings', (req, res) => {
+    const s = oauthSettings(store);
+    res.json({ ...s, redirect_uri: s.redirect_uri || `${req.protocol}://${req.get('host')}/auth/callback` });
+  });
+
+  api.post('/oauth/start', (req, res) => {
+    try {
+      saveOAuthSettings(store, req.body || {});
+    } catch (err) {
+      throw new HttpError(400, err.message, err.details);
+    }
+    res.json({ login_url: buildLoginUrl(store, { version: config.graphVersion }) });
+  });
+
+  api.post('/oauth/exchange', async (req, res) => {
+    const parsed = parseRedirectInput(req.body?.input);
+    if (parsed.error) throw new HttpError(400, `Meta meldet: ${parsed.error}`);
+    try {
+      const me = await completeLogin(store, client, { ...parsed, requireState: false });
+      res.json({ ok: true, username: me.username, account: accountStatus(store) });
+    } catch (err) {
+      throw new HttpError(400, `Verbinden fehlgeschlagen: ${err.message}`);
+    }
+  });
+
   api.post('/account/reload', async (req, res) => {
     const token = getAccessToken(store);
     if (!token) throw new HttpError(400, 'Kein Access Token hinterlegt.');
@@ -319,6 +346,23 @@ function createApp({ config, store, client, poller = null, logger = console }) {
   api.use((req, res) => res.status(404).json({ error: 'Nicht gefunden.' }));
 
   app.use('/api', api);
+
+  // Rücksprung von Meta nach der Anmeldung (Unified login)
+  app.get('/auth/callback', async (req, res) => {
+    const back = (params) => res.redirect(`/?${new URLSearchParams(params)}`);
+    if (!isAuthenticated(req)) return back({ oauth_error: 'Bitte zuerst im Dashboard anmelden und dann erneut verbinden.' });
+    const { code, state } = req.query;
+    const error = req.query.error_description || req.query.error_message || req.query.error;
+    if (error) return back({ oauth_error: `Meta meldet: ${String(error).slice(0, 300)}` });
+    try {
+      const me = await completeLogin(store, client, { code: String(code || ''), state: String(state || '') });
+      logger.log(`Mit Meta verbunden: @${me.username}`);
+      return back({ oauth: 'ok', username: me.username || '' });
+    } catch (err) {
+      logger.warn(`Verbinden über Meta fehlgeschlagen: ${err}`);
+      return back({ oauth_error: String(err.message || err).slice(0, 400) });
+    }
+  });
 
   // Dashboard (statische Dateien)
   app.use(express.static(path.join(__dirname, '..', 'public'), { index: 'index.html', maxAge: '1h' }));

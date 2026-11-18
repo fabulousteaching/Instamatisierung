@@ -239,3 +239,7 @@ form.card > .btn-primary { margin-top: 16px; }
   .account span:not(.dot) { display: none; }
   .copy-row { flex-direction: column; }
 }
+
+details.hint { margin-top: 14px; }
+details.hint summary { cursor: pointer; font-weight: 600; }
+details.hint p { margin: 8px 0; }
