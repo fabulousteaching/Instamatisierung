@@ -57,7 +57,9 @@ In der **Instagram-App** auf dem Handy:
 ### 3.3 Dein Instagram-Konto als Tester eintragen
 
 1. Links im Menü: **App-Rollen → Rollen** (*App roles → Roles*) → **Personen hinzufügen** (*Add People*).
+   ⚠️ Nicht **„Testnutzer“** (*Test users*) nehmen: Das sind simulierte Facebook-Konten, die wir nicht brauchen.
 2. Rolle **„Instagram-Tester“** (*Instagram Tester*) wählen und deinen **Instagram-Benutzernamen** eingeben → *Hinzufügen*.
+   *(Gibt es die Rolle „Instagram-Tester“ nicht, fehlt der Instagram-Anwendungsfall: siehe 3.1, Schritt 3, bzw. unter **Anwendungsfälle** hinzufügen.)*
 3. **Einladung annehmen:** Öffne im Browser <https://www.instagram.com/accounts/manage_access/> (Instagram → Einstellungen → *Apps und Websites*), wechsle zum Reiter **„Tester-Einladungen“** (*Tester Invites*) und klicke auf **Annehmen**.
 
 ### 3.4 Zugangsschlüssel (Access Token) erzeugen
