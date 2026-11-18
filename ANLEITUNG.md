@@ -43,7 +43,7 @@ In der **Instagram-App** auf dem Handy:
 1. **Meine Apps → App erstellen** (*My Apps → Create App*).
 2. **App-Name:** z. B. `Instamatisierung` (darf nicht „Instagram“ enthalten), dazu deine E-Mail-Adresse → *Weiter*.
 3. **Anwendungsfall** (*Use case*): **„Nachrichten und Inhalte auf Instagram verwalten“** (*Manage messaging & content on Instagram*) → *Weiter*.
-4. **Unternehmen** (*Business*): **„Ich möchte noch kein Unternehmensportfolio verbinden“** (*I don't want to connect a business portfolio yet*) → *Weiter*.
+4. **Unternehmen** (*Business*): Wenn du schon ein Unternehmensportfolio hast, wähle es aus. Bei neuen Apps ist es später ohnehin Pflicht (siehe B1). Sonst *„Ich möchte noch kein Unternehmensportfolio verbinden“* → *Weiter*.
 5. Übersicht prüfen → **App erstellen** (*Create app*). Eventuell musst du dein Facebook-Passwort nochmal eingeben.
 
 ### 3.2 Welche Variante hat deine App?
