@@ -309,7 +309,8 @@ function createApp({ config, store, client, poller = null, logger = console }) {
   // ----- Anmeldung über Meta (Unified login) -----
   api.get('/oauth/settings', (req, res) => {
     const s = oauthSettings(store);
-    res.json({ ...s, redirect_uri: s.redirect_uri || `${req.protocol}://${req.get('host')}/auth/callback` });
+    // Meta akzeptiert nur https-Adressen – auch für localhost.
+    res.json({ ...s, redirect_uri: s.redirect_uri || `https://${req.get('host')}/auth/callback` });
   });
 
   api.post('/oauth/start', (req, res) => {

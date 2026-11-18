@@ -719,9 +719,22 @@ async function renderSettings() {
       redirectInput.select();
     }
   });
-  const loginBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Bei Meta anmelden & verbinden' });
+  // Liegt die Weiterleitungs-URL nicht auf diesem Tool (z. B. https://localhost, weil Meta https verlangt),
+  // kann der Browser nach der Anmeldung nicht automatisch zurückkommen -> Adresse von Hand einfügen.
+  const isManual = () => {
+    try {
+      return new URL(redirectInput.value).origin !== location.origin;
+    } catch {
+      return true;
+    }
+  };
+  const loginBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Bei Meta anmelden' });
   loginBtn.addEventListener('click', () =>
     withBusy(loginBtn, async () => {
+      // Im Hand-Modus in neuem Tab öffnen, damit dieses Fenster mit dem Einfügefeld offen bleibt.
+      // (Tab sofort beim Klick öffnen, sonst blockiert der Browser das Pop-up.)
+      const tab = isManual() ? window.open('about:blank', '_blank') : null;
+      if (tab) tab.opener = null;
       try {
         const res = await api('POST', '/oauth/start', {
           app_id: appIdInput.value,
@@ -729,14 +742,21 @@ async function renderSettings() {
           config_id: configIdInput.value,
           redirect_uri: redirectInput.value,
         });
-        window.location.href = res.login_url;
+        if (tab) {
+          tab.location.href = res.login_url;
+          toast('Meta wurde in einem neuen Tab geöffnet');
+          pasteInput.focus();
+        } else {
+          window.location.href = res.login_url;
+        }
       } catch (err) {
+        if (tab) tab.close();
         toast(err.message, true);
       }
     }),
   );
-  const pasteInput = el('input', { type: 'text', placeholder: 'Komplette Adresse aus der Browserzeile, z. B. https://…?code=…', autocomplete: 'off' });
-  const pasteBtn = el('button', { class: 'btn', type: 'button', text: 'Übernehmen' });
+  const pasteInput = el('input', { type: 'text', placeholder: 'https://localhost:3000/auth/callback?code=…', autocomplete: 'off' });
+  const pasteBtn = el('button', { class: 'btn btn-primary', type: 'button', text: 'Verbinden' });
   pasteBtn.addEventListener('click', () =>
     withBusy(pasteBtn, async () => {
       try {
@@ -749,6 +769,16 @@ async function renderSettings() {
     }),
   );
 
+  const step2Text = el('p', { class: 'hint' });
+  const updateStep2 = () => {
+    step2Text.textContent = isManual()
+      ? 'Nach der Anmeldung bei Meta zeigt der neue Tab eine Fehlerseite (z. B. „Diese Website kann keine sichere Verbindung bereitstellen“). Das ist normal! ' +
+        'Kopiere die komplette Adresse aus der Adresszeile dieses Tabs (beginnt mit https://localhost…?code=) und füge sie hier ein:'
+      : 'Normalerweise kommst du nach der Anmeldung automatisch hierher zurück. Falls stattdessen eine Fehlerseite erscheint, kopiere die komplette Adresse aus der Adresszeile und füge sie hier ein:';
+  };
+  redirectInput.addEventListener('input', updateStep2);
+  updateStep2();
+
   box.append(
     el(
       'div',
@@ -756,7 +786,7 @@ async function renderSettings() {
       el('h2', { text: 'Mit Meta verbinden (für neue Apps mit „Unified login“)' }),
       el('p', {
         class: 'hint',
-        text: 'Trage die Werte aus dem Meta-Entwicklerportal ein und klicke auf „Bei Meta anmelden“. Danach holt das Tool den Token automatisch ab.',
+        text: 'Trage die Werte aus dem Meta-Entwicklerportal ein, melde dich bei Meta an – danach holt das Tool den Token selbst ab.',
       }),
       el(
         'div',
@@ -768,17 +798,11 @@ async function renderSettings() {
       configIdInput,
       el('label', {}, 'Weiterleitungs-URL ', el('span', { class: 'muted', text: '(genau so bei Meta unter „Neue Weiterleitungs-URL registrieren“ eintragen)' })),
       el('div', { class: 'copy-row' }, redirectInput, copyRedirectBtn),
+      el('h3', { class: 'step', text: 'Schritt 1' }),
       el('div', { class: 'row gap wrap' }, loginBtn),
-      el(
-        'details',
-        { class: 'hint' },
-        el('summary', { text: 'Die Rückleitung hat nicht geklappt?' }),
-        el('p', {
-          text:
-            'Wenn nach der Anmeldung bei Meta eine Fehlerseite kommt (z. B. „Seite nicht erreichbar“), kopiere die komplette Adresse aus der Browserzeile und füge sie hier ein:',
-        }),
-        el('div', { class: 'copy-row' }, pasteInput, pasteBtn),
-      ),
+      el('h3', { class: 'step', text: 'Schritt 2' }),
+      step2Text,
+      el('div', { class: 'copy-row' }, pasteInput, pasteBtn),
     ),
   );
 
