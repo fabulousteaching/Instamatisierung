@@ -4,8 +4,6 @@
 
 Jemand kommentiert „Info“ unter deinem Reel → das Tool schickt automatisch eine **Direktnachricht** (z. B. mit Link zu deinem Freebie) und antwortet **öffentlich** unter dem Kommentar („Schau in deine DMs 📩“).
 
-> 🎄 **Neu: Wichtel-Auslosung für die Schulklasse** im Ordner [`wichtel/`](wichtel/README.md): Kinder schreiben ihren Wunschzettel auf dem Tablet, am Beamer bringen Wichtel jedem Kind seinen geheimen Wichtelzettel.
-
 > 🆓 **Nur für dein eigenes Konto und kostenlos?** Dann folge der Schritt-für-Schritt-Anleitung **[ANLEITUNG.md](ANLEITUNG.md)**. Das Tool läuft dabei auf deinem Computer, ohne Server und ohne App-Prüfung.
 
 ![Automationen](docs/screenshot-automationen.png)
